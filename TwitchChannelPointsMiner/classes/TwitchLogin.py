@@ -73,7 +73,8 @@ class TwitchLogin(object):
         self.shared_cookies = []
 
     def login_flow(self):
-        logger.info("You'll have to login to Twitch!")
+        logger.info("You'll have to login to Twitch!",
+                    extra={"username": self.username})
 
         post_data = {
             "client_id": self.client_id,
@@ -86,7 +87,8 @@ class TwitchLogin(object):
         use_backup_flow = False
         # use_backup_flow = True
         while True:
-            logger.info("Trying the TV login method..")
+            logger.info("Trying the TV login method..",
+                        extra={"username": self.username})
 
             login_response = self.send_oauth_request(
                 "https://id.twitch.tv/oauth2/device", post_data)
@@ -100,7 +102,8 @@ class TwitchLogin(object):
             # }
 
             if login_response.status_code != 200:
-                logger.error("TV login response is not 200. Try again")
+                logger.error("TV login response is not 200. Try again",
+                            extra={"username": self.username})
                 break
 
             login_response_json = login_response.json()
@@ -116,7 +119,7 @@ class TwitchLogin(object):
                     "Open https://www.twitch.tv/activate"
                 )
                 logger.info(
-                    f"and enter this code: {user_code}"
+                f"and enter this code: {user_code}"
                 )
                 logger.info(
                     f"Hurry up! It will expire in {int(login_response_json['expires_in'] / 60)} minutes!"

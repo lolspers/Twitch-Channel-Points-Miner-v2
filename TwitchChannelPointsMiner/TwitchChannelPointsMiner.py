@@ -161,17 +161,24 @@ class TwitchChannelPointsMiner:
         current_version, github_version = check_versions()
 
         logger.info(
-            f"Twitch Channel Points Miner v2-{current_version} (fork by rdavydov)"
+            f"Twitch Channel Points Miner v2-{current_version} (fork by rdavydov)",
+            extra={"username": self.username}
         )
-        logger.info("https://github.com/rdavydov/Twitch-Channel-Points-Miner-v2")
 
         if github_version == "0.0.0":
             logger.error(
-                "Unable to detect if you have the latest version of this script"
+                "Unable to detect if you have the latest version of this script",
+                extra={"username": self.username}
             )
         elif current_version != github_version:
-            logger.info(f"You are running version {current_version} of this script")
-            logger.info(f"The latest version on GitHub is {github_version}")
+            logger.info(
+                f"You are running version {current_version} of this script",
+                extra={"username": self.username}
+            )
+            logger.info(
+                f"The latest version on GitHub is {github_version}",
+                extra={"username": self.username}
+            )
 
         for sign in [signal.SIGINT, signal.SIGSEGV, signal.SIGTERM]:
             signal.signal(sign, self.end)
@@ -221,7 +228,7 @@ class TwitchChannelPointsMiner:
             logger.error("You can't start multiple sessions of this instance!")
         else:
             logger.info(
-                f"Start session: '{self.session_id}'", extra={"emoji": ":bomb:"}
+                f"Start session: '{self.session_id}'", extra={"emoji": ":bomb:", "username": self.username}
             )
             self.running = True
             self.start_datetime = datetime.now()
@@ -248,7 +255,7 @@ class TwitchChannelPointsMiner:
                 followers_array = self.twitch.get_followers(order=followers_order)
                 logger.info(
                     f"Load {len(followers_array)} followers from your profile!",
-                    extra={"emoji": ":clipboard:"},
+                    extra={"emoji": ":clipboard:", "username": self.username},
                 )
                 for username in followers_array:
                     if username not in streamers_dict and username not in blacklist:
@@ -257,7 +264,7 @@ class TwitchChannelPointsMiner:
 
             logger.info(
                 f"Loading data for {len(streamers_name)} streamers. Please wait...",
-                extra={"emoji": ":nerd_face:"},
+                extra={"emoji": ":nerd_face:", "username": self.username},
             )
             for username in streamers_name:
                 if username in streamers_name:
@@ -266,7 +273,7 @@ class TwitchChannelPointsMiner:
                         streamer = (
                             streamers_dict[username]
                             if isinstance(streamers_dict[username], Streamer) is True
-                            else Streamer(username)
+                            else Streamer(username, minerUsername=self.username)
                         )
                         streamer.channel_id = self.twitch.get_channel_id(username)
                         streamer.settings = set_default_settings(
@@ -285,7 +292,7 @@ class TwitchChannelPointsMiner:
                     except StreamerDoesNotExistException:
                         logger.info(
                             f"Streamer {username} does not exist",
-                            extra={"emoji": ":cry:"},
+                            extra={"emoji": ":cry:", "username": self.username},
                         )
 
             # Populate the streamers with default values.
@@ -301,7 +308,7 @@ class TwitchChannelPointsMiner:
                 except StreamerDoesNotExistException:
                     logger.info(
                         f"Streamer {streamer.username} does not exist",
-                        extra={"emoji": ":cry:"},
+                        extra={"emoji": ":cry:", "username": self.username},
                     )
 
             self.original_streamers = [
@@ -346,7 +353,7 @@ class TwitchChannelPointsMiner:
 
             # Fixes 'ERR_BADAUTH'
             if not user_id:
-                logger.error("No user_id, exiting...")
+                logger.error("No user_id, exiting...", extra={"username": self.username})
                 self.end(0, 0)
 
             self.ws_pool.submit(
@@ -400,7 +407,8 @@ class TwitchChannelPointsMiner:
                         and internet_connection_available() is True
                     ):
                         logger.info(
-                            f"#{index} - The last PING was sent more than 10 minutes ago. Reconnecting to the WebSocket..."
+                            f"#{index} - The last PING was sent more than 10 minutes ago. Reconnecting to the WebSocket...",
+                            extra={"username": self.username}
                         )
                         WebSocketsPool.handle_reconnection(self.ws_pool.ws[index])
 
@@ -416,7 +424,7 @@ class TwitchChannelPointsMiner:
         if not self.running:
             return
         
-        logger.info("CTRL+C Detected! Please wait just a moment!")
+        logger.info("CTRL+C Detected! Please wait just a moment!", extra={"username": self.username})
 
         for streamer in self.streamers:
             if (
@@ -454,15 +462,15 @@ class TwitchChannelPointsMiner:
     def __print_report(self):
         print("\n")
         logger.info(
-            f"Ending session: '{self.session_id}'", extra={"emoji": ":stop_sign:"}
+            f"Ending session: '{self.session_id}'", extra={"emoji": ":stop_sign:", "username": self.username}
         )
         if self.logs_file is not None:
             logger.info(
-                f"Logs file: {self.logs_file}", extra={"emoji": ":page_facing_up:"}
+                f"Logs file: {self.logs_file}", extra={"emoji": ":page_facing_up:", "username": self.username}
             )
         logger.info(
             f"Duration {datetime.now() - self.start_datetime}",
-            extra={"emoji": ":hourglass:"},
+            extra={"emoji": ":hourglass:", "username": self.username},
         )
 
         if not Settings.logger.less and self.events_predictions != {}:
@@ -475,16 +483,16 @@ class TwitchChannelPointsMiner:
                 ):
                     logger.info(
                         f"{event.streamer.settings.bet}",
-                        extra={"emoji": ":wrench:"},
+                        extra={"emoji": ":wrench:", "username": self.username},
                     )
                     if event.streamer.settings.bet.filter_condition is not None:
                         logger.info(
                             f"{event.streamer.settings.bet.filter_condition}",
-                            extra={"emoji": ":pushpin:"},
+                            extra={"emoji": ":pushpin:", "username": self.username},
                         )
                     logger.info(
                         f"{event.print_recap()}",
-                        extra={"emoji": ":bar_chart:"},
+                        extra={"emoji": ":bar_chart:", "username": self.username},
                     )
 
         print("")
@@ -509,5 +517,5 @@ class TwitchChannelPointsMiner:
                 
                 logger.info(
                     f"{streamer_gain}\n{streamer_history}",
-                    extra={"emoji": ":moneybag:"},
+                    extra={"emoji": ":moneybag:", "username": self.username},
                 )

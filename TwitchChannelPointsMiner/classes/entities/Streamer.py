@@ -35,7 +35,7 @@ class StreamerSettings(object):
         claim_moments: bool = None,
         watch_streak: bool = None,
         community_goals: bool = None,
-        bet: BetSettings = None,
+        bet: BetSettings | None = None,
         chat: ChatPresence = None,
     ):
         self.make_predictions = make_predictions
@@ -88,9 +88,10 @@ class Streamer(object):
         "history",
         "streamer_url",
         "mutex",
+        "minerUser"
     ]
 
-    def __init__(self, username, settings=None):
+    def __init__(self, username, settings=None, minerUsername: str | None = None):
         self.username: str = username.lower().strip()
         self.channel_id: str = ""
         self.settings = settings
@@ -114,6 +115,8 @@ class Streamer(object):
 
         self.mutex = Lock()
 
+        self.minerUser = minerUsername
+
     def __repr__(self):
         return f"Streamer(username={self.username}, channel_id={self.channel_id}, channel_points={_millify(self.channel_points)})"
 
@@ -136,6 +139,7 @@ class Streamer(object):
             extra={
                 "emoji": ":sleeping:",
                 "event": Events.STREAMER_OFFLINE,
+                "username": self.minerUser
             },
         )
 
@@ -152,6 +156,7 @@ class Streamer(object):
             extra={
                 "emoji": ":partying_face:",
                 "event": Events.STREAMER_ONLINE,
+                "username": self.minerUser
             },
         )
 

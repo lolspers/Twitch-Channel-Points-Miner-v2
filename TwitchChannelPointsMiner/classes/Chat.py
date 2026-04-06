@@ -93,13 +93,13 @@ class ThreadChat(Thread):
     def run(self):
         self.chat_irc = ClientIRC(self.username, self.token, self.channel)
         logger.info(
-            f"Join IRC Chat: {self.channel}", extra={"emoji": ":speech_balloon:"}
+            f"Join IRC Chat: {self.channel}", extra={"emoji": ":speech_balloon:", "username": self.username}
         )
         self.chat_irc.start()
 
     def stop(self):
         if self.chat_irc is not None:
             logger.info(
-                f"Leave IRC Chat: {self.channel}", extra={"emoji": ":speech_balloon:"}
+                f"Leave IRC Chat: {self.channel}", extra={"emoji": ":speech_balloon:", "username": self.username}
             )
             self.chat_irc.die()

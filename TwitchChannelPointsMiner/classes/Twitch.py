@@ -154,7 +154,8 @@ class Twitch(object):
                 regex_spade, response).group(1)
         except requests.exceptions.RequestException as e:
             logger.error(
-                f"Something went wrong during extraction of 'spade_url': {e}")
+                f"Something went wrong during extraction of 'spade_url': {e}",
+                extra={"username": self.twitch_login.username})
 
     def get_broadcast_id(self, streamer):
         json_data = copy.deepcopy(GQLOperations.WithIsStreamLiveQuery)
@@ -242,7 +243,8 @@ class Twitch(object):
             logger.info(
                 f"Joining raid from {streamer} to {raid.target_login}!",
                 extra={"emoji": ":performing_arts:",
-                       "event": Events.JOIN_RAID},
+                       "event": Events.JOIN_RAID,
+                       "username": self.twitch_login.username},
             )
 
     def viewer_is_mod(self, streamer):
@@ -269,7 +271,8 @@ class Twitch(object):
         while internet_connection_available() is False:
             random_sleep = random.randint(1, 3)
             logger.warning(
-                f"No internet connection available! Retry after {random_sleep}m"
+                f"No internet connection available! Retry after {random_sleep}m",
+                extra={"username": self.twitch_login.username}
             )
             self.__chuncked_sleep(random_sleep * 60, chunk_size=chunk_size)
 
@@ -289,12 +292,14 @@ class Twitch(object):
                 },
             )
             logger.debug(
-                f"Data: {json_data}, Status code: {response.status_code}, Content: {response.text}"
+                f"Data: {json_data}, Status code: {response.status_code}, Content: {response.text}",
+                extra={"username": self.twitch_login.username}
             )
             return response.json()
         except requests.exceptions.RequestException as e:
             logger.error(
-                f"Error with GQLOperations ({json_data['operationName']}): {e}"
+                f"Error with GQLOperations ({json_data['operationName']}): {e}",
+                extra={"username": self.twitch_login.username}
             )
             return {}
 
@@ -359,18 +364,22 @@ class Twitch(object):
             response = requests.get(URL)
             if response.status_code != 200:
                 logger.debug(
-                    f"Error with update_client_version: {response.status_code}"
+                    f"Error with update_client_version: {response.status_code}",
+                    extra={"username": self.twitch_login.username}
                 )
                 return self.client_version
             matcher = re.search(self.twilight_build_id_pattern, response.text)
             if not matcher:
-                logger.debug("Error with update_client_version: no match")
+                logger.debug("Error with update_client_version: no match",
+                    extra={"username": self.twitch_login.username})
                 return self.client_version
             self.client_version = matcher.group(1)
-            logger.debug(f"Client version: {self.client_version}")
+            logger.debug(f"Client version: {self.client_version}",
+                extra={"username": self.twitch_login.username})
             return self.client_version
         except requests.exceptions.RequestException as e:
-            logger.error(f"Error with update_client_version: {e}")
+            logger.error(f"Error with update_client_version: {e}",
+                extra={"username": self.twitch_login.username})
             return self.client_version
 
     def send_minute_watched_events(self, streamers, priority, chunk_size=3):
@@ -501,11 +510,13 @@ class Twitch(object):
                             responsePlaybackAccessToken = self.post_gql_request(
                                 json_data)
                             logger.debug(
-                                f"Sent PlaybackAccessToken request for {streamers[index]}")
+                                f"Sent PlaybackAccessToken request for {streamers[index]}",
+                                extra={"username": self.twitch_login.username})
 
                             if 'data' not in responsePlaybackAccessToken:
                                 logger.error(
-                                    f"Invalid response from Twitch: {responsePlaybackAccessToken}")
+                                    f"Invalid response from Twitch: {responsePlaybackAccessToken}",
+                                    extra={"username": self.twitch_login.username})
                                 continue
 
                             streamPlaybackAccessToken = responsePlaybackAccessToken["data"].get(
@@ -516,12 +527,14 @@ class Twitch(object):
 
                             if not signature or not value:
                                 logger.error(
-                                    f"Missing signature or value in Twitch response: {responsePlaybackAccessToken}")
+                                    f"Missing signature or value in Twitch response: {responsePlaybackAccessToken}",
+                                    extra={"username": self.twitch_login.username})
                                 continue
 
                         except Exception as e:
                             logger.error(
-                                f"Error fetching PlaybackAccessToken for {streamers[index]}: {str(e)}")
+                                f"Error fetching PlaybackAccessToken for {streamers[index]}: {str(e)}",
+                                extra={"username": self.twitch_login.username})
                             continue
 
                         # encoded_value = quote(json.dumps(value))
@@ -536,7 +549,8 @@ class Twitch(object):
                             timeout=20,
                         )  # timeout=60
                         logger.debug(
-                            f"Send RequestBroadcastQualitiesURL request for {streamers[index]} - Status code: {responseBroadcastQualities.status_code}"
+                            f"Send RequestBroadcastQualitiesURL request for {streamers[index]} - Status code: {responseBroadcastQualities.status_code}",
+                            extra={"username": self.twitch_login.username}
                         )
                         if responseBroadcastQualities.status_code != 200:
                             continue
@@ -555,7 +569,8 @@ class Twitch(object):
                             timeout=20,
                         )  # timeout=60
                         logger.debug(
-                            f"Send BroadcastLowestQualityURL request for {streamers[index]} - Status code: {responseStreamURLList.status_code}"
+                            f"Send BroadcastLowestQualityURL request for {streamers[index]} - Status code: {responseStreamURLList.status_code}",
+                            extra={"username": self.twitch_login.username}
                         )
                         if responseStreamURLList.status_code != 200:
                             continue
@@ -573,7 +588,8 @@ class Twitch(object):
                             timeout=20,
                         )  # timeout=60
                         logger.debug(
-                            f"Send StreamLowestQualityURL request for {streamers[index]} - Status code: {responseStreamLowestQualityURL.status_code}"
+                            f"Send StreamLowestQualityURL request for {streamers[index]} - Status code: {responseStreamLowestQualityURL.status_code}",
+                            extra={"username": self.twitch_login.username}
                         )
                         if responseStreamLowestQualityURL.status_code != 200:
                             continue
@@ -587,7 +603,8 @@ class Twitch(object):
                             timeout=20,
                         )
                         logger.debug(
-                            f"Send minute watched request for {streamers[index]} - Status code: {response.status_code}"
+                            f"Send minute watched request for {streamers[index]} - Status code: {response.status_code}",
+                            extra={"username": self.twitch_login.username}
                         )
                         if response.status_code == 204:
                             streamers[index].stream.update_minute_watched()
@@ -620,7 +637,8 @@ class Twitch(object):
                                                     "skip_discord": True,
                                                     "skip_webhook": True,
                                                     "skip_matrix": True,
-                                                    "skip_gotify": True
+                                                    "skip_gotify": True,
+                                                    "username": self.twitch_login.username
                                                 },
                                             )
 
@@ -648,11 +666,13 @@ class Twitch(object):
 
                     except requests.exceptions.ConnectionError as e:
                         logger.error(
-                            f"Error while trying to send minute watched: {e}")
+                            f"Error while trying to send minute watched: {e}",
+                            extra={"username": self.twitch_login.username})
                         self.__check_connection_handler(chunk_size)
                     except requests.exceptions.Timeout as e:
                         logger.error(
-                            f"Error while trying to send minute watched: {e}")
+                            f"Error while trying to send minute watched: {e}",
+                            extra={"username": self.twitch_login.username})
 
                     self.__chuncked_sleep(
                         next_iteration - time.time(), chunk_size=chunk_size
@@ -663,7 +683,8 @@ class Twitch(object):
                     self.__chuncked_sleep(20, chunk_size=chunk_size)
             except Exception:
                 logger.error(
-                    "Exception raised in send minute watched", exc_info=True)
+                    "Exception raised in send minute watched", exc_info=True,
+                    extra={"username": self.twitch_login.username})
 
     # === CHANNEL POINTS / PREDICTION === #
     # Load the amount of current points for a channel, check if a bonus is available
@@ -705,6 +726,7 @@ class Twitch(object):
             extra={
                 "emoji": ":four_leaf_clover:",
                 "event": Events.BET_GENERAL,
+                "username": self.twitch_login.username
             },
         )
         if event.status == "ACTIVE":
@@ -715,6 +737,7 @@ class Twitch(object):
                     extra={
                         "emoji": ":pushpin:",
                         "event": Events.BET_FILTERS,
+                        "username": self.twitch_login.username,
                     },
                 )
                 logger.info(
@@ -722,6 +745,7 @@ class Twitch(object):
                     extra={
                         "emoji": ":pushpin:",
                         "event": Events.BET_FILTERS,
+                        "username": self.twitch_login.username,
                     },
                 )
             else:
@@ -732,6 +756,7 @@ class Twitch(object):
                         extra={
                             "emoji": ":four_leaf_clover:",
                             "event": Events.BET_GENERAL,
+                            "username": self.twitch_login.username,
                         },
                     )
 
@@ -757,6 +782,7 @@ class Twitch(object):
                             extra={
                                 "emoji": ":four_leaf_clover:",
                                 "event": Events.BET_FAILED,
+                                "username": self.twitch_login.username
                             },
                         )
                 else:
@@ -765,6 +791,7 @@ class Twitch(object):
                         extra={
                             "emoji": ":four_leaf_clover:",
                             "event": Events.BET_GENERAL,
+                             "username": self.twitch_login.username
                         },
                     )
         else:
@@ -773,6 +800,7 @@ class Twitch(object):
                 extra={
                     "emoji": ":disappointed_relieved:",
                     "event": Events.BET_FAILED,
+                    "username": self.twitch_login.username
                 },
             )
 
@@ -780,7 +808,8 @@ class Twitch(object):
         if Settings.logger.less is False:
             logger.info(
                 f"Claiming the bonus for {streamer}!",
-                extra={"emoji": ":gift:", "event": Events.BONUS_CLAIM},
+                extra={"emoji": ":gift:", "event": Events.BONUS_CLAIM,
+                        "username": self.twitch_login.username},
             )
 
         json_data = copy.deepcopy(GQLOperations.ClaimCommunityPoints)
@@ -795,7 +824,8 @@ class Twitch(object):
             logger.info(
                 f"Claiming the moment for {streamer}!",
                 extra={"emoji": ":video_camera:",
-                       "event": Events.MOMENT_CLAIM},
+                       "event": Events.MOMENT_CLAIM,
+                        "username": self.twitch_login.username},
             )
 
         json_data = copy.deepcopy(GQLOperations.CommunityMomentCallout_Claim)
@@ -860,7 +890,8 @@ class Twitch(object):
 
             response = self.post_gql_request(json_data)
             if not isinstance(response, list):
-                logger.debug("Unexpected campaigns response format, skipping chunk")
+                logger.debug("Unexpected campaigns response format, skipping chunk",
+                             extra={"username": self.twitch_login.username})
                 continue
             for r in response:
                 drop_campaign = (
@@ -896,7 +927,8 @@ class Twitch(object):
 
     def claim_drop(self, drop):
         logger.info(
-            f"Claim {drop}", extra={"emoji": ":package:", "event": Events.DROP_CLAIM}
+            f"Claim {drop}", extra={"emoji": ":package:", "event": Events.DROP_CLAIM,
+                                    "username": self.twitch_login.username}
         )
 
         json_data = copy.deepcopy(GQLOperations.DropsPage_ClaimDropRewards)
@@ -992,7 +1024,8 @@ class Twitch(object):
                         )
 
             except (ValueError, KeyError, requests.exceptions.ConnectionError) as e:
-                logger.error(f"Error while syncing inventory: {e}")
+                logger.error(f"Error while syncing inventory: {e}",
+                                extra={"username": self.twitch_login.username})
                 campaigns = []
                 self.__check_connection_handler(chunk_size)
 
@@ -1012,7 +1045,8 @@ class Twitch(object):
             ]["goalContributions"]
 
             logger.debug(
-                f"Found {len(user_goal_contributions)} community goals for the current stream"
+                f"Found {len(user_goal_contributions)} community goals for the current stream",
+                extra={"username": self.twitch_login.username}
             )
 
             for goal_contribution in user_goal_contributions:
@@ -1021,7 +1055,8 @@ class Twitch(object):
                 if goal is None:
                     # TODO should this trigger a new load context request
                     logger.error(
-                        f"Unable to find context data for community goal {goal_id}"
+                        f"Unable to find context data for community goal {goal_id}",
+                        extra={"username": self.twitch_login.username}
                     )
                 else:
                     user_stream_contribution = goal_contribution[
@@ -1042,7 +1077,8 @@ class Twitch(object):
                         )
                     else:
                         logger.debug(
-                            f"Not contributing to community goal {goal.title}, user channel points {streamer.channel_points}, user stream contribution {user_stream_contribution}, all users total contribution {goal.points_contributed}"
+                            f"Not contributing to community goal {goal.title}, user channel points {streamer.channel_points}, user stream contribution {user_stream_contribution}, all users total contribution {goal.points_contributed}",
+                            extra={"username": self.twitch_login.username}
                         )
 
     def contribute_to_community_goal(self, streamer, goal_id, title, amount):
@@ -1062,10 +1098,12 @@ class Twitch(object):
         error = response["data"]["contributeCommunityPointsCommunityGoal"]["error"]
         if error:
             logger.error(
-                f"Unable to contribute channel points to community goal '{title}', reason '{error}'"
+                f"Unable to contribute channel points to community goal '{title}', reason '{error}'",
+                extra={"username": self.twitch_login.username}
             )
         else:
             logger.info(
-                f"Contributed {amount} channel points to community goal '{title}'"
+                f"Contributed {amount} channel points to community goal '{title}'",
+                extra={"username": self.twitch_login.username}
             )
             streamer.channel_points -= amount
