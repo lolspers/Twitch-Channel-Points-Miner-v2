@@ -116,13 +116,16 @@ class TwitchLogin(object):
                 expires_at = now + \
                     timedelta(seconds=login_response_json["expires_in"])
                 logger.info(
-                    "Open https://www.twitch.tv/activate"
+                    "Open https://www.twitch.tv/activate",
+                    extra={"username": self.username}
                 )
                 logger.info(
-                f"and enter this code: {user_code}"
+                    f"and enter this code: {user_code}",
+                    extra={"username": self.username}
                 )
                 logger.info(
-                    f"Hurry up! It will expire in {int(login_response_json['expires_in'] / 60)} minutes!"
+                    f"Hurry up! It will expire in {int(login_response_json['expires_in'] / 60)} minutes!",
+                    extra={"username": self.username}
                 )
                 # twofa = input("2FA token: ")
                 # webbrowser.open_new_tab("https://www.twitch.tv/activate")
@@ -139,7 +142,8 @@ class TwitchLogin(object):
                     login_response = self.send_oauth_request(
                         "https://id.twitch.tv/oauth2/token", post_data)
                     if now == expires_at:
-                        logger.error("Code expired. Try again")
+                        logger.error("Code expired. Try again",
+                                    extra={"username": self.username})
                         break
                     # 200 means success, 400 means the user haven't entered the code yet
                     if login_response.status_code != 200:
@@ -166,7 +170,8 @@ class TwitchLogin(object):
                         if "error_code" in login_response:
                             err_code = login_response["error_code"]
 
-                        logger.error(f"Unknown error: {login_response}")
+                        logger.error(f"Unknown error: {login_response}",
+                                    extra={"username": self.username})
                         raise NotImplementedError(
                             f"Unknown TwitchAPI error code: {err_code}"
                         )
@@ -274,13 +279,15 @@ class TwitchLogin(object):
             "What browser do you use? Chrome (1), Firefox (2), Other (3): "
         ).strip()
         if browser not in ("1", "2"):
-            logger.info("Your browser is unsupported, sorry.")
+            logger.info("Your browser is unsupported, sorry.",
+                        extra={"username": self.username})
             return None
 
         input(
             "Please login inside your browser of choice (NOT incognito mode) and press Enter..."
         )
-        logger.info("Loading cookies saved on your computer...")
+        logger.info("Loading cookies saved on your computer...",
+                    extra={"username": self.username})
         twitch_domain = ".twitch.tv"
         if browser == "1":  # chrome
             cookie_jar = browser_cookie3.chrome(domain_name=twitch_domain)
@@ -303,7 +310,8 @@ class TwitchLogin(object):
         return self.login_check_result
 
     def save_cookies(self, cookies_file):
-        logger.info("Saving cookies to your computer..")
+        logger.info("Saving cookies to your computer..",
+                    extra={"username": self.username})
         cookies_dict = self.session.cookies.get_dict()
         # print(f"cookies_dict2pickle: {cookies_dict}")
         cookies_dict["auth-token"] = self.token
