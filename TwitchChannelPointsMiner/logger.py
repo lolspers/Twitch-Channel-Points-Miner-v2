@@ -278,8 +278,9 @@ class GlobalFormatter(logging.Formatter):
 
 
 class UsernameFilter(logging.Filter):
-    def __init__(self, name: str = "", username: str = "") -> None:
-        self.username = username
+    def __init__(self, name: str = "", username: str = "", userId: str | None = None) -> None:
+        self.username: str = username
+        self.userId: str | None = userId
         super().__init__(name=name)
 
 
@@ -287,22 +288,28 @@ class UsernameFilter(logging.Filter):
         try:
             username: str = getattr(record, "username")
         except AttributeError:
+            if self.userId:
+                try:
+                    userId = getattr(record, "userId")
+                    return userId == self.userId
+                except AttributeError:
+                    pass
             return True
-        
-        # print(f"{self.username == username} - {username=} - {record.getMessage()=}")
+
         return self.username == username
 
 
-def configure_loggers(username, settings):
+def configure_loggers(username, userId, settings):
     if settings.colored is True:
         init(autoreset=True)
 
     # Queue handler that will handle the logger queue
     logger_queue = queue.Queue(-1)
     queue_handler = QueueHandler(logger_queue)
+    queue_handler.set_name(username)
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
-    queue_handler.addFilter(UsernameFilter(username=username))
+    queue_handler.addFilter(UsernameFilter(username=username, userId=userId))
     # Add the queue handler to the root logger
     # Send log messages to another thread through the queue
     root_logger.addHandler(queue_handler)
@@ -313,7 +320,7 @@ def configure_loggers(username, settings):
     settings.username = console_username
 
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.addFilter(UsernameFilter(username=username))
+    console_handler.addFilter(UsernameFilter(username=username, userId=userId))
     console_handler.setLevel(settings.console_level)
     console_handler.setFormatter(
         GlobalFormatter(
@@ -361,7 +368,7 @@ def configure_loggers(username, settings):
                 settings=settings
             )
         )
-        file_handler.addFilter(UsernameFilter(username=username))
+        file_handler.addFilter(UsernameFilter(username=username, userId=userId))
         file_handler.setLevel(settings.file_level)
 
         # Add logger handlers to the logger queue and start the process

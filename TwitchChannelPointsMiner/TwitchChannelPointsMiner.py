@@ -154,7 +154,7 @@ class TwitchChannelPointsMiner:
         self.original_streamers = []
 
         self.logs_file, self.queue_listener = configure_loggers(
-            self.username, logger_settings
+            self.username, self.twitch.twitch_login.get_user_id(), logger_settings
         )
 
         # Check for the latest version of the script

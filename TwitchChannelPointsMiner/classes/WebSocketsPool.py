@@ -211,6 +211,7 @@ class WebSocketsPool:
                                 extra={
                                     "emoji": ":rocket:",
                                     "event": Events.get(f"GAIN_FOR_{reason_code}"),
+                                    "userId": message.topic_user
                                 },
                             )
                             ws.streamers[streamer_index].update_history(
